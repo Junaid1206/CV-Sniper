@@ -11,7 +11,7 @@ import urllib.parse
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 else:
-    st.error("⚠️ API Key missing! Please add GEMINI_API_KEY in Streamlit Secrets.")
+    st.error(" API Key missing! Please add GEMINI_API_KEY in Streamlit Secrets.")
 
 def get_gemini_pro_analysis(resume_text, job_role, prompt_type):
     model = genai.GenerativeModel('gemini-2.5-flash') 
@@ -44,7 +44,7 @@ def get_gemini_pro_analysis(resume_text, job_role, prompt_type):
         return response.text
 
 # --- UI Setup ---
-st.set_page_config(page_title="Career Navigator Pro", layout="wide", page_icon="🚀")
+st.set_page_config(page_title="Career Navigator Pro", layout="wide")
 
 st.markdown("""
     <style>
@@ -65,10 +65,10 @@ if "chat_history" not in st.session_state: st.session_state.chat_history = []
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=80)
     st.title("Upload Center")
-    target_role = st.text_input("🎯 Target Job Role", placeholder="e.g. AI Engineer")
-    uploaded_file = st.file_uploader("📂 Drop your Resume (PDF)", type=["pdf"])
+    target_role = st.text_input(" Target Job Role", placeholder="e.g. AI Engineer")
+    uploaded_file = st.file_uploader(" Drop your Resume (PDF)", type=["pdf"])
     
-    if st.button("🚀 Analyze My Profile", use_container_width=True):
+    if st.button(" Analyze My Profile", use_container_width=True):
         if uploaded_file and target_role:
             with st.spinner("Crunching data with AI..."):
                 reader = pdf.PdfReader(uploaded_file)
@@ -77,7 +77,7 @@ with st.sidebar:
                 st.rerun()
     
     st.write("---")
-    with st.popover("💬 Career Assistant", use_container_width=True):
+    with st.popover("Career Assistant", use_container_width=True):
         st.subheader("Smart Career Bot")
         chat_box = st.container(height=300)
         for m in st.session_state.chat_history:
@@ -94,7 +94,7 @@ with st.sidebar:
 if st.session_state.data:
     res = st.session_state.data
     st.title("Career Intelligence Dashboard")
-    tab1, tab2, tab3, tab4 = st.tabs(["👤 Profile Match", "📈 Market Analytics", "🔍 Live Jobs", "🛠️ Skill Roadmap"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Profile Match", "Market Analytics", "Live Jobs", "Skill Roadmap"])
 
     with tab1:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -107,10 +107,10 @@ if st.session_state.data:
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("**Top Strengths**")
-            for s in res.get('skills_found', []): st.markdown(f"<span class='skill-tag'>✅ {s}</span>", unsafe_allow_html=True)
+            for s in res.get('skills_found', []): st.markdown(f"<span class='skill-tag'> {s}</span>", unsafe_allow_html=True)
         with c2:
             st.markdown("**Gaps to Fill**")
-            for s in res.get('skills_missing', []): st.markdown(f"<span class='skill-tag' style='background:#FFF1F2; color:#9F1239;'>❌ {s}</span>", unsafe_allow_html=True)
+            for s in res.get('skills_missing', []): st.markdown(f"<span class='skill-tag' style='background:#FFF1F2; color:#9F1239;'> {s}</span>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with tab2:
@@ -129,7 +129,7 @@ if st.session_state.data:
         st.markdown("</div>", unsafe_allow_html=True)
 
     with tab3:
-        st.subheader("🚀 Real-time Direct Job Links")
+        st.subheader("Real-time Direct Job Links")
         for job in res.get('job_links', []):
             job_title = job['title']
             platform = job.get('platform', 'LinkedIn')
@@ -153,11 +153,12 @@ if st.session_state.data:
     with tab4:
         st.subheader("4-Week Mastery Roadmap")
         for step in res.get('roadmap', []):
-            with st.expander(f"📅 Week {step['week']}: {step['task'][:50]}..."):
+            with st.expander(f"Week {step['week']}: {step['task'][:50]}..."):
                 st.write(f"**Goal:** {step['task']}")
                 for r in step['resources']:
                     st.markdown(f"- [Search {r} on YouTube](https://www.youtube.com/results?search_query={r.replace(' ','+')})")
 
 else:
-    st.info("👈 Please upload your resume in the sidebar to begin.")
+    st.info("Please upload your resume in the sidebar to begin.")
+
     st.image("https://img.freepik.com/free-vector/modern-dashboard-ui-ux-design_52683-39031.jpg", use_container_width=True)

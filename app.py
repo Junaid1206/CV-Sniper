@@ -87,7 +87,7 @@ with st.sidebar:
                 
                 if result == "LIMIT_EXHAUSTED":
                     st.warning("**Daily Limit Reached!**")
-                    st.info("Bhai, CV Sniper ki aaj ki limit puri ho gayi hai. Aapka resume analyze nahi ho paya. Please kal subah dobara try karein! 🎯")
+                    st.info(""Daily quota reached! 🚀 My AI engine needs a recharge. Please check back tomorrow for your precision career analysis. 🎯")
                 elif result:
                     st.session_state.data = result
                     st.rerun()
@@ -183,3 +183,4 @@ if st.session_state.data:
 else:
     st.info("👈 Please upload your resume in the sidebar to begin.")
     st.image("https://img.freepik.com/free-vector/modern-dashboard-ui-ux-design_52683-39031.jpg", use_container_width=True)
+

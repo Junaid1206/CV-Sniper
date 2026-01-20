@@ -7,13 +7,13 @@ from datetime import datetime
 import urllib.parse 
 
 # --- SECURE CONFIGURATION ---
-# Ab ye code direct key nahi mangega, balki dashboard ke "Secrets" se uthayega
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 else:
-    st.error(" API Key missing! Please add GEMINI_API_KEY in Streamlit Secrets.")
+    st.error("API Key missing! Please add GEMINI_API_KEY in Streamlit Secrets.")
 
 def get_gemini_pro_analysis(resume_text, job_role, prompt_type):
+    # Model configuration
     model = genai.GenerativeModel('gemini-2.5-flash') 
     
     prompts = {
@@ -32,19 +32,28 @@ def get_gemini_pro_analysis(resume_text, job_role, prompt_type):
                 "projects": ["Idea 1", "Idea 2"]
             }}
             Resume: {resume_text}
-        """,
-        "chat": f"You are a Career Expert. Answer this query: "
+        """
     }
     
-    response = model.generate_content(prompts["full_analysis"] if prompt_type == "analysis" else f"Career Guide: {resume_text}")
     try:
-        clean_json = response.text.replace("```json", "").replace("```", "").strip()
-        return json.loads(clean_json)
-    except:
-        return response.text
+        if prompt_type == "analysis":
+            response = model.generate_content(prompts["full_analysis"])
+            clean_json = response.text.replace("```json", "").replace("```", "").strip()
+            return json.loads(clean_json)
+        else:
+            response = model.generate_content(f"Career Guide for {job_role}: {resume_text}")
+            return response.text
+            
+    except Exception as e:
+        # Check for Resource Exhausted / Rate Limit error
+        if "429" in str(e) or "ResourceExhausted" in str(e):
+            return "LIMIT_EXHAUSTED"
+        else:
+            st.error(f"Technical Error: {e}")
+            return None
 
 # --- UI Setup ---
-st.set_page_config(page_title="Career Navigator Pro", layout="wide")
+st.set_page_config(page_title="CV Sniper | Precision Career Intelligence", layout="wide")
 
 st.markdown("""
     <style>
@@ -64,20 +73,29 @@ if "chat_history" not in st.session_state: st.session_state.chat_history = []
 
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=80)
-    st.title("Upload Center")
-    target_role = st.text_input(" Target Job Role", placeholder="e.g. AI Engineer")
-    uploaded_file = st.file_uploader(" Drop your Resume (PDF)", type=["pdf"])
+    st.title("CV Sniper Center")
+    target_role = st.text_input("Target Job Role", placeholder="e.g. AI Engineer")
+    uploaded_file = st.file_uploader("Drop your Resume (PDF)", type=["pdf"])
     
-    if st.button(" Analyze My Profile", use_container_width=True):
+    if st.button("Analyze My Profile", use_container_width=True):
         if uploaded_file and target_role:
-            with st.spinner("Crunching data with AI..."):
+            with st.spinner("Sniper is targeting your career gaps..."):
                 reader = pdf.PdfReader(uploaded_file)
                 text = "".join([page.extract_text() for page in reader.pages])
-                st.session_state.data = get_gemini_pro_analysis(text, target_role, "analysis")
-                st.rerun()
+                
+                result = get_gemini_pro_analysis(text, target_role, "analysis")
+                
+                if result == "LIMIT_EXHAUSTED":
+                    st.warning("**Daily Limit Reached!**")
+                    st.info("Bhai, CV Sniper ki aaj ki limit puri ho gayi hai. Aapka resume analyze nahi ho paya. Please kal subah dobara try karein! 🎯")
+                elif result:
+                    st.session_state.data = result
+                    st.rerun()
+        else:
+            st.warning("Please provide both Job Role and Resume.")
     
     st.write("---")
-    with st.popover("Career Assistant", use_container_width=True):
+    with st.popover("💬 Career Assistant", use_container_width=True):
         st.subheader("Smart Career Bot")
         chat_box = st.container(height=300)
         for m in st.session_state.chat_history:
@@ -86,15 +104,19 @@ with st.sidebar:
         if query := st.chat_input("Ask me anything..."):
             st.session_state.chat_history.append({"role": "user", "content": query})
             chat_box.chat_message("user").write(query)
-            model = genai.GenerativeModel('gemini-2.5-flash')
-            bot_reply = model.generate_content(f"User is asking about {target_role}. Question: {query}").text
+            
+            bot_reply = get_gemini_pro_analysis(query, target_role, "chat")
+            
+            if bot_reply == "LIMIT_EXHAUSTED":
+                bot_reply = "Daily quota reached! 🚀 My AI engine needs a recharge. Please check back tomorrow for your precision career analysis. 😴"
+                
             st.session_state.chat_history.append({"role": "assistant", "content": bot_reply})
             chat_box.chat_message("assistant").write(bot_reply)
 
 if st.session_state.data:
     res = st.session_state.data
-    st.title("Career Intelligence Dashboard")
-    tab1, tab2, tab3, tab4 = st.tabs(["Profile Match", "Market Analytics", "Live Jobs", "Skill Roadmap"])
+    st.title("🎯 CV Sniper Dashboard")
+    tab1, tab2, tab3, tab4 = st.tabs(["👤 Profile Match", "📈 Market Analytics", "🔍 Live Jobs", "🛠️ Skill Roadmap"])
 
     with tab1:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -103,14 +125,14 @@ if st.session_state.data:
             st.subheader("Ability Summary")
             st.write(res.get('summary', 'Analysis pending...'))
         with col_d:
-            st.download_button("📥 Download Report", str(res), file_name="Career_Analysis.txt", use_container_width=True)
+            st.download_button("📥 Download Report", str(res), file_name="CV_Sniper_Report.txt", use_container_width=True)
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("**Top Strengths**")
-            for s in res.get('skills_found', []): st.markdown(f"<span class='skill-tag'> {s}</span>", unsafe_allow_html=True)
+            for s in res.get('skills_found', []): st.markdown(f"<span class='skill-tag'>✅ {s}</span>", unsafe_allow_html=True)
         with c2:
             st.markdown("**Gaps to Fill**")
-            for s in res.get('skills_missing', []): st.markdown(f"<span class='skill-tag' style='background:#FFF1F2; color:#9F1239;'> {s}</span>", unsafe_allow_html=True)
+            for s in res.get('skills_missing', []): st.markdown(f"<span class='skill-tag' style='background:#FFF1F2; color:#9F1239;'>❌ {s}</span>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with tab2:
@@ -129,7 +151,7 @@ if st.session_state.data:
         st.markdown("</div>", unsafe_allow_html=True)
 
     with tab3:
-        st.subheader("Real-time Direct Job Links")
+        st.subheader("🚀 Real-time Direct Job Links")
         for job in res.get('job_links', []):
             job_title = job['title']
             platform = job.get('platform', 'LinkedIn')
@@ -159,6 +181,5 @@ if st.session_state.data:
                     st.markdown(f"- [Search {r} on YouTube](https://www.youtube.com/results?search_query={r.replace(' ','+')})")
 
 else:
-    st.info("Please upload your resume in the sidebar to begin.")
-
+    st.info("👈 Please upload your resume in the sidebar to begin.")
     st.image("https://img.freepik.com/free-vector/modern-dashboard-ui-ux-design_52683-39031.jpg", use_container_width=True)
